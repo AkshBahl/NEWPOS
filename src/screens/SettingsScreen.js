@@ -1,154 +1,112 @@
 /**
  * SettingsScreen Component
- * Displays settings options list
+ * Displays settings options with logout
+ * Matches Figma design
  */
 import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
+  TouchableOpacity,
   Alert,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
-import { spacing } from '../theme/spacing';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useNavigation } from '@react-navigation/native';
 import TopBar from '../components/TopBar';
 
-// Settings options configuration
-const SETTINGS_OPTIONS = [
-  {
-    id: 'profile',
-    title: 'Profile',
-    icon: '👤',
-    description: 'Manage your account details',
-  },
-  {
-    id: 'passcode',
-    title: 'Change Passcode',
-    icon: '🔐',
-    description: 'Update your security passcode',
-  },
-  {
-    id: 'payment',
-    title: 'Payment Methods',
-    icon: '💳',
-    description: 'Configure payment options',
-  },
-  {
-    id: 'printer',
-    title: 'Printer Setup',
-    icon: '🖨️',
-    description: 'Connect and manage printers',
-  },
-  {
-    id: 'theme',
-    title: 'Theme (Light/Dark)',
-    icon: '🎨',
-    description: 'Customize app appearance',
-  },
-  {
-    id: 'logout',
-    title: 'Logout',
-    icon: '🚪',
-    description: 'Sign out of your account',
-    isDestructive: true,
-  },
+const settingsItems = [
+  { label: 'Profile', icon: 'account-outline' },
+  { label: 'Change Passcode', icon: 'lock-outline' },
+  { label: 'Payment Methods', icon: 'credit-card-outline' },
+  { label: 'Printer Setup', icon: 'printer-outline' },
+  { label: 'App Theme', icon: 'brightness-6' },
 ];
 
-const SettingsScreen = ({ navigation }) => {
-  /**
-   * Handle option press
-   */
-  const handleOptionPress = (option) => {
-    if (option.id === 'logout') {
-      Alert.alert(
-        'Logout',
-        'Are you sure you want to logout?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Logout',
-            style: 'destructive',
-            onPress: () => navigation.replace('Passcode'),
-          },
-        ]
-      );
-    } else {
-      Alert.alert(
-        option.title,
-        `${option.description}\n\nThis feature is coming soon!`,
-        [{ text: 'OK' }]
-      );
-    }
+const SettingsScreen = () => {
+  const navigation = useNavigation();
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: () => navigation.replace('Passcode'),
+        },
+      ]
+    );
   };
 
-  /**
-   * Render settings option
-   */
-  const renderOption = (option) => (
-    <TouchableOpacity
-      key={option.id}
-      style={styles.optionItem}
-      onPress={() => handleOptionPress(option)}
-      activeOpacity={0.7}
-    >
-      {/* Icon */}
-      <View style={styles.iconContainer}>
-        <Text style={styles.optionIcon}>{option.icon}</Text>
-      </View>
+  const handleSettingPress = (label) => {
+    Alert.alert(label, `${label} settings will be available soon.`);
+  };
 
-      {/* Content */}
-      <View style={styles.optionContent}>
-        <Text
-          style={[
-            styles.optionTitle,
-            option.isDestructive && styles.destructiveText,
-          ]}
-        >
-          {option.title}
-        </Text>
-        <Text style={styles.optionDescription}>{option.description}</Text>
-      </View>
-
-      {/* Arrow */}
-      <Text style={styles.arrowIcon}>›</Text>
-    </TouchableOpacity>
-  );
+  const handleSettingsIconPress = () => {
+    // Already on settings page
+  };
 
   return (
     <View style={styles.container}>
-      {/* Top Bar */}
-      <TopBar title="Settings" showProfile={false} />
+      <TopBar onProfilePress={handleSettingsIconPress} />
 
-      {/* Settings List */}
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* User Info Card */}
-        <View style={styles.userCard}>
-          <View style={styles.userAvatar}>
-            <Text style={styles.userAvatarText}>👤</Text>
-          </View>
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>Admin User</Text>
-            <Text style={styles.userRole}>Store Manager</Text>
-          </View>
+        {/* Section Title */}
+        <Text style={styles.sectionTitle}>Settings</Text>
+
+        {/* Settings Items */}
+        <View style={styles.settingsContainer}>
+          {settingsItems.map((item) => (
+            <TouchableOpacity
+              key={item.label}
+              style={styles.settingCard}
+              onPress={() => handleSettingPress(item.label)}
+              activeOpacity={0.7}
+            >
+              {/* Icon */}
+              <View style={styles.iconContainer}>
+                <MaterialCommunityIcons
+                  name={item.icon}
+                  size={22}
+                  color="#6b7280"
+                />
+              </View>
+
+              {/* Label */}
+              <Text style={styles.settingLabel}>{item.label}</Text>
+
+              {/* Chevron */}
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color="#d1d5db"
+              />
+            </TouchableOpacity>
+          ))}
+
+          {/* Logout Button */}
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            activeOpacity={0.7}
+          >
+            <MaterialCommunityIcons
+              name="logout"
+              size={20}
+              color="#ef4444"
+            />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Settings Options */}
-        <View style={styles.optionsContainer}>
-          {SETTINGS_OPTIONS.map(renderOption)}
-        </View>
-
-        {/* App Version */}
-        <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>NewPOS v1.0.0</Text>
-          <Text style={styles.copyrightText}>© 2024 NewPOS. All rights reserved.</Text>
-        </View>
+        <View style={styles.bottomPadding} />
       </ScrollView>
     </View>
   );
@@ -157,119 +115,72 @@ const SettingsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: '#ffffff',
   },
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: spacing.xxxl,
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 16,
   },
-  userCard: {
+  settingsContainer: {
+    paddingHorizontal: 20,
+  },
+  settingCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background,
-    marginHorizontal: spacing.lg,
-    marginVertical: spacing.lg,
-    padding: spacing.lg,
-    borderRadius: spacing.borderRadius.lg,
-    shadowColor: colors.black,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  userAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  userAvatarText: {
-    fontSize: 28,
-  },
-  userInfo: {
-    marginLeft: spacing.lg,
-    flex: 1,
-  },
-  userName: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
-  },
-  userRole: {
-    fontSize: typography.sizes.sm,
-    color: colors.textSecondary,
-  },
-  optionsContainer: {
-    backgroundColor: colors.background,
-    marginHorizontal: spacing.lg,
-    borderRadius: spacing.borderRadius.lg,
-    overflow: 'hidden',
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  optionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   iconContainer: {
     width: 44,
     height: 44,
-    borderRadius: spacing.borderRadius.md,
-    backgroundColor: colors.surface,
+    borderRadius: 12,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
+    marginRight: 14,
   },
-  optionIcon: {
-    fontSize: 22,
-  },
-  optionContent: {
+  settingLabel: {
     flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#374151',
   },
-  optionTitle: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semiBold,
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
-  },
-  optionDescription: {
-    fontSize: typography.sizes.xs,
-    color: colors.textSecondary,
-  },
-  destructiveText: {
-    color: colors.error,
-  },
-  arrowIcon: {
-    fontSize: 24,
-    color: colors.textSecondary,
-    fontWeight: typography.weights.medium,
-  },
-  versionContainer: {
+  logoutButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.xxxl,
-    paddingHorizontal: spacing.lg,
+    justifyContent: 'center',
+    backgroundColor: '#fef2f2',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    padding: 16,
+    marginTop: 8,
   },
-  versionText: {
-    fontSize: typography.sizes.sm,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
+  logoutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ef4444',
+    marginLeft: 8,
   },
-  copyrightText: {
-    fontSize: typography.sizes.xs,
-    color: colors.textSecondary,
+  bottomPadding: {
+    height: 100,
   },
 });
 
 export default SettingsScreen;
-

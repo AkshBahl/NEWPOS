@@ -1,7 +1,7 @@
 /**
  * MenuCard Component
- * Displays menu item with image, title, price, and add button
- * Used in a 2-column grid layout on Menu screen
+ * Displays menu item with image, title, and price
+ * Matches Figma design - simple card layout
  */
 import React from 'react';
 import {
@@ -11,12 +11,10 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
-import { spacing } from '../theme/spacing';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const MenuCard = ({ item, onAddToOrder }) => {
-  const { name, price, category, image_url } = item;
+  const { name, price, image_url } = item;
 
   return (
     <TouchableOpacity
@@ -34,33 +32,20 @@ const MenuCard = ({ item, onAddToOrder }) => {
           />
         ) : (
           <View style={styles.placeholderImage}>
-            <Text style={styles.placeholderText}>🍽️</Text>
+            <MaterialCommunityIcons name="food" size={40} color="#d1d5db" />
           </View>
         )}
       </View>
       
       {/* Item Details */}
       <View style={styles.details}>
-        {/* Category Tag */}
-        <Text style={styles.category}>{category}</Text>
-        
         {/* Item Name */}
-        <Text style={styles.name} numberOfLines={2}>
+        <Text style={styles.name} numberOfLines={1}>
           {name}
         </Text>
         
-        {/* Price and Add Button Row */}
-        <View style={styles.footer}>
-          <Text style={styles.price}>${price?.toFixed(2)}</Text>
-          
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => onAddToOrder?.(item)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.addButtonText}>+</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Price */}
+        <Text style={styles.price}>${price?.toFixed(2)}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -69,19 +54,21 @@ const MenuCard = ({ item, onAddToOrder }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-    borderRadius: spacing.borderRadius.lg,
-    margin: spacing.sm,
-    shadowColor: colors.black,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    margin: 6,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
   },
   imageContainer: {
-    height: 120,
-    backgroundColor: colors.surface,
+    height: 110,
+    backgroundColor: '#f9fafb',
   },
   image: {
     width: '100%',
@@ -91,52 +78,23 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-  },
-  placeholderText: {
-    fontSize: 40,
+    backgroundColor: '#f3f4f6',
   },
   details: {
-    padding: spacing.md,
-  },
-  category: {
-    fontSize: typography.sizes.xs,
-    color: colors.primary,
-    fontWeight: typography.weights.medium,
-    textTransform: 'uppercase',
-    marginBottom: spacing.xs,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   name: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semiBold,
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 4,
   },
   price: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.textPrimary,
-  },
-  addButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addButtonText: {
-    fontSize: 20,
-    color: colors.white,
-    fontWeight: typography.weights.bold,
-    lineHeight: 22,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#d4a574',
   },
 });
 
 export default MenuCard;
-

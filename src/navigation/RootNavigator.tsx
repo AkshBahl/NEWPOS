@@ -1,7 +1,7 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import Feather from "react-native-vector-icons/Feather";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { RootStackParamList, TabParamList } from "./types";
 
 import MenuScreen from "../screens/MenuScreen";
@@ -21,23 +21,36 @@ function MainTabs() {
         headerShown: false,
         tabBarShowLabel: true,
         tabBarStyle: {
-          height: 64,
+          height: 70,
+          paddingTop: 8,
+          paddingBottom: 10,
           borderTopColor: "#e5e7eb",
           borderTopWidth: 1,
+          backgroundColor: "#ffffff",
         },
-        tabBarLabelStyle: { fontSize: 11, marginBottom: 4 },
-        tabBarIcon: ({ color, size }) => {
-          const nameMap: Record<string, string> = {
-            Menu: "grid",
-            Tables: "layers",
-            Orders: "clipboard",
-            Customers: "users",
-            Receipts: "file-text",
+        tabBarLabelStyle: { 
+          fontSize: 11, 
+          fontWeight: "500",
+          marginTop: 2,
+        },
+        tabBarIcon: ({ color, focused }) => {
+          const iconMap: Record<string, string> = {
+            Menu: "silverware-fork-knife",
+            Tables: "table-furniture",
+            Orders: "clipboard-text-outline",
+            Customers: "account-group-outline",
+            Receipts: "receipt",
           };
-          const iconName = nameMap[route.name] ?? "circle";
-          return <Feather name={iconName as any} color={color} size={20} />;
+          const iconName = iconMap[route.name] ?? "circle";
+          return (
+            <MaterialCommunityIcons 
+              name={iconName} 
+              color={color} 
+              size={24} 
+            />
+          );
         },
-        tabBarActiveTintColor: "#bfa06a",
+        tabBarActiveTintColor: "#d4a574",
         tabBarInactiveTintColor: "#9ca3af",
       })}
     >
@@ -59,4 +72,3 @@ export default function RootNavigator() {
     </Stack.Navigator>
   );
 }
-

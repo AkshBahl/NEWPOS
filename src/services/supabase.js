@@ -8,11 +8,13 @@
 import { createClient } from '@supabase/supabase-js';
 import 'react-native-url-polyfill/auto';
 
-// TODO: Replace with your Supabase project URL
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+// Supabase project URL - Get from Settings -> API in Supabase dashboard
+const SUPABASE_URL = 'https://knxwqksgfjkgfyadadce.supabase.co';
 
-// TODO: Replace with your Supabase anon/public key
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+// Supabase anon/public key - Get from Settings -> API in Supabase dashboard  
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtueHdxa3NnZmprZ2Z5YWRhZGNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMzIxMDEsImV4cCI6MjA3OTkwODEwMX0.oRlgcG1vNiAfGruTDHiKuzQaedKsV49eYh9YRAd90b0';
+
+console.log('Supabase URL:', SUPABASE_URL);
 
 // Create and export the Supabase client
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -31,7 +33,8 @@ export const TABLES = {
 
 /**
  * Fetch passcode from settings table
- * @returns {Promise<string|null>} The passcode or null if not found
+ * Falls back to default '1234' if table doesn't exist
+ * @returns {Promise<string>} The passcode
  */
 export const fetchPasscode = async () => {
   try {
@@ -41,11 +44,15 @@ export const fetchPasscode = async () => {
       .eq('key', 'passcode')
       .single();
 
-    if (error) throw error;
-    return data?.value || null;
+    if (error) {
+      // Table doesn't exist or other error - use default
+      console.log('Using default passcode (settings table not found)');
+      return '1234';
+    }
+    return data?.value || '1234';
   } catch (error) {
-    console.error('Error fetching passcode:', error);
-    return null;
+    console.log('Using default passcode');
+    return '1234';
   }
 };
 
@@ -55,15 +62,21 @@ export const fetchPasscode = async () => {
  */
 export const fetchMenuItems = async () => {
   try {
+    console.log('Fetching menu items from Supabase...');
     const { data, error } = await supabase
       .from(TABLES.MENU_ITEMS)
-      .select('*')
-      .order('category', { ascending: true });
+      .select('*');
 
-    if (error) throw error;
+    console.log('Menu items response:', { data, error });
+
+    if (error) {
+      console.log('Menu items error:', error.message);
+      return [];
+    }
+    console.log('Menu items fetched:', data?.length || 0, 'items');
     return data || [];
   } catch (error) {
-    console.error('Error fetching menu items:', error);
+    console.log('Error fetching menu items:', error);
     return [];
   }
 };
@@ -76,13 +89,15 @@ export const fetchTables = async () => {
   try {
     const { data, error } = await supabase
       .from(TABLES.TABLES)
-      .select('*')
-      .order('name', { ascending: true });
+      .select('*');
 
-    if (error) throw error;
+    if (error) {
+      console.log('Tables table not found or error:', error.message);
+      return [];
+    }
     return data || [];
   } catch (error) {
-    console.error('Error fetching tables:', error);
+    console.log('Error fetching tables:', error);
     return [];
   }
 };
@@ -100,15 +115,18 @@ export const fetchOrders = async (status = null) => {
       .order('created_at', { ascending: false });
 
     if (status) {
-      query = query.eq('status', status);
+      query = query.ilike('status', status);
     }
 
     const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {
+      console.log('Orders table not found or error:', error.message);
+      return [];
+    }
     return data || [];
   } catch (error) {
-    console.error('Error fetching orders:', error);
+    console.log('Error fetching orders:', error);
     return [];
   }
 };
@@ -121,13 +139,15 @@ export const fetchCustomers = async () => {
   try {
     const { data, error } = await supabase
       .from(TABLES.CUSTOMERS)
-      .select('*')
-      .order('name', { ascending: true });
+      .select('*');
 
-    if (error) throw error;
+    if (error) {
+      console.log('Customers table not found or error:', error.message);
+      return [];
+    }
     return data || [];
   } catch (error) {
-    console.error('Error fetching customers:', error);
+    console.log('Error fetching customers:', error);
     return [];
   }
 };
@@ -143,10 +163,13 @@ export const fetchReceipts = async () => {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.log('Receipts table not found or error:', error.message);
+      return [];
+    }
     return data || [];
   } catch (error) {
-    console.error('Error fetching receipts:', error);
+    console.log('Error fetching receipts:', error);
     return [];
   }
 };

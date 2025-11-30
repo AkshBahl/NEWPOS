@@ -1,38 +1,79 @@
-import React from "react";
-import { View, Text } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
 import HeaderBar from "../components/HeaderBar";
+import { fetchTables, updateTableStatus } from "../services/supabase";
 
-const tables = [
-  { id: 1, name: "Table 1", status: "Free", color: "#bbf7d0", border: "#22c55e" },
-  { id: 2, name: "Table 2", status: "Occupied", color: "#fde68a", border: "#b45309" },
-  { id: 3, name: "Table 3", status: "Reserved", color: "#bfdbfe", border: "#2563eb" },
-  { id: 4, name: "Table 4", status: "Free", color: "#bbf7d0", border: "#22c55e" },
-];
+const getStatusStyle = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case "free":
+      return { bg: "#dcfce7", border: "#22c55e", text: "#15803d", icon: "#22c55e" };
+    case "occupied":
+      return { bg: "#fef3c7", border: "#d97706", text: "#92400e", icon: "#d97706" };
+    case "reserved":
+      return { bg: "#dbeafe", border: "#3b82f6", text: "#1d4ed8", icon: "#3b82f6" };
+    default:
+      return { bg: "#f3f4f6", border: "#9ca3af", text: "#6b7280", icon: "#9ca3af" };
+  }
+};
 
 export default function TablesScreen() {
+  const [tables, setTables] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadTables();
+  }, []);
+
+  const loadTables = async () => {
+    setLoading(true);
+    const data = await fetchTables();
+    setTables(data);
+    setLoading(false);
+  };
+
   return (
     <View className="flex-1 bg-white">
       <HeaderBar />
 
-      <View className="px-6 mt-4">
-        <Text className="text-sm text-gray-700 mb-2">Tables</Text>
+      <View className="px-5 mt-4">
+        <Text className="text-base font-semibold text-gray-800 mb-4">Tables</Text>
 
-        <View className="flex-row flex-wrap justify-between">
-          {tables.map((t) => (
-            <View
-              key={t.id}
-              className="w-[48%] rounded-2xl mb-3 items-center justify-center py-6"
-              style={{ backgroundColor: t.color, borderColor: t.border, borderWidth: 1 }}
-            >
-              <Feather name="monitor" size={24} color={t.border} />
-              <Text className="mt-2 text-xs text-gray-700">{t.name}</Text>
-              <Text className="mt-1 text-[10px] text-gray-500">{t.status}</Text>
+        {loading ? (
+          <View className="flex-1 items-center justify-center py-20">
+            <ActivityIndicator size="large" color="#d4a574" />
+          </View>
+        ) : (
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <View className="flex-row flex-wrap justify-between pb-24">
+              {tables.map((table) => {
+                const style = getStatusStyle(table.status);
+                return (
+                  <TouchableOpacity
+                    key={table.id}
+                    className="w-[48%] rounded-2xl mb-4 items-center justify-center py-6"
+                    style={{ backgroundColor: style.bg, borderColor: style.border, borderWidth: 1.5 }}
+                    activeOpacity={0.7}
+                  >
+                    <Feather name="layout" size={28} color={style.icon} />
+                    <Text className="mt-3 text-sm font-medium" style={{ color: style.text }}>
+                      {table.name}
+                    </Text>
+                    <View 
+                      className="mt-2 px-3 py-1 rounded-full"
+                      style={{ backgroundColor: `${style.border}20` }}
+                    >
+                      <Text className="text-xs font-medium" style={{ color: style.text }}>
+                        {table.status}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
-          ))}
-        </View>
+          </ScrollView>
+        )}
       </View>
     </View>
   );
 }
-

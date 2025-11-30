@@ -1,7 +1,6 @@
 /**
  * SearchBar Component
- * Rounded search input with placeholder text
- * Used for filtering lists in Menu, Customers screens
+ * Rounded search input matching Figma design
  */
 import React from 'react';
 import {
@@ -9,22 +8,19 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
-  Text,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
-import { spacing } from '../theme/spacing';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const SearchBar = ({
   value,
   onChangeText,
-  placeholder = 'Search...',
+  placeholder = 'Search menu...',
   onClear,
 }) => {
   return (
     <View style={styles.container}>
       {/* Search Icon */}
-      <Text style={styles.searchIcon}>🔍</Text>
+      <MaterialCommunityIcons name="magnify" size={20} color="#9ca3af" />
       
       {/* Search Input */}
       <TextInput
@@ -32,7 +28,7 @@ const SearchBar = ({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={colors.textSecondary}
+        placeholderTextColor="#9ca3af"
         autoCapitalize="none"
         autoCorrect={false}
       />
@@ -40,7 +36,7 @@ const SearchBar = ({
       {/* Clear Button */}
       {value ? (
         <TouchableOpacity onPress={onClear} style={styles.clearButton}>
-          <Text style={styles.clearText}>✕</Text>
+          <MaterialCommunityIcons name="close-circle" size={18} color="#9ca3af" />
         </TouchableOpacity>
       ) : null}
     </View>
@@ -51,33 +47,23 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: spacing.borderRadius.lg,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    marginHorizontal: spacing.lg,
-    marginVertical: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  searchIcon: {
-    fontSize: 16,
-    marginRight: spacing.sm,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginHorizontal: 20,
+    marginVertical: 12,
   },
   input: {
     flex: 1,
-    fontSize: typography.sizes.md,
-    color: colors.textPrimary,
-    paddingVertical: spacing.xs,
+    fontSize: 15,
+    color: '#374151',
+    marginLeft: 10,
+    paddingVertical: 0,
   },
   clearButton: {
-    padding: spacing.xs,
-  },
-  clearText: {
-    fontSize: 14,
-    color: colors.textSecondary,
+    padding: 4,
   },
 });
 
 export default SearchBar;
-

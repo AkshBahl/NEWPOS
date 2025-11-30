@@ -120,7 +120,7 @@ const ReceiptsScreen = ({ navigation }) => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <TopBar title="Receipts" onProfilePress={handleProfilePress} />
+        <TopBar onProfilePress={handleProfilePress} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading receipts...</Text>
@@ -133,7 +133,7 @@ const ReceiptsScreen = ({ navigation }) => {
   if (error && receipts.length === 0) {
     return (
       <View style={styles.container}>
-        <TopBar title="Receipts" onProfilePress={handleProfilePress} />
+        <TopBar onProfilePress={handleProfilePress} />
         <View style={styles.errorContainer}>
           <Text style={styles.errorIcon}>⚠️</Text>
           <Text style={styles.errorText}>{error}</Text>
@@ -145,7 +145,7 @@ const ReceiptsScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       {/* Top Bar */}
-      <TopBar title="Receipts" onProfilePress={handleProfilePress} />
+      <TopBar onProfilePress={handleProfilePress} />
 
       {/* Summary Stats */}
       <View style={styles.summaryContainer}>

@@ -1,143 +1,95 @@
 /**
  * TablesScreen Component
- * Displays tables in a grid with status-based color coding
- * free → green, occupied → red, reserved → yellow
+ * Displays tables in a 2-column grid with status indicators
+ * Matches Figma design
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
   Text,
-  Alert,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
-import { spacing } from '../theme/spacing';
-import { fetchTables, updateTableStatus } from '../services/supabase';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { fetchTables } from '../services/supabase';
 import TopBar from '../components/TopBar';
-import TableCard from '../components/TableCard';
+
+const getStatusStyle = (status) => {
+  switch (status?.toLowerCase()) {
+    case 'free':
+      return {
+        bg: '#dcfce7',
+        border: '#22c55e',
+        text: '#15803d',
+        icon: '#22c55e',
+        badgeBg: '#bbf7d0',
+      };
+    case 'occupied':
+      return {
+        bg: '#fef3c7',
+        border: '#d97706',
+        text: '#92400e',
+        icon: '#92400e',
+        badgeBg: '#fde68a',
+      };
+    case 'reserved':
+      return {
+        bg: '#dbeafe',
+        border: '#3b82f6',
+        text: '#1d4ed8',
+        icon: '#3b82f6',
+        badgeBg: '#bfdbfe',
+      };
+    default:
+      return {
+        bg: '#f3f4f6',
+        border: '#9ca3af',
+        text: '#6b7280',
+        icon: '#9ca3af',
+        badgeBg: '#e5e7eb',
+      };
+  }
+};
 
 const TablesScreen = ({ navigation }) => {
-  // State
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
 
-  // Fetch tables on mount
   useEffect(() => {
     loadTables();
   }, []);
 
-  /**
-   * Load tables from Supabase
-   */
   const loadTables = async () => {
     try {
-      setError(null);
       const data = await fetchTables();
       setTables(data);
     } catch (err) {
-      setError('Failed to load tables');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Handle pull-to-refresh
-   */
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadTables();
     setRefreshing(false);
   }, []);
 
-  /**
-   * Handle table press - show status options
-   */
-  const handleTablePress = (table) => {
-    Alert.alert(
-      table.name,
-      `Current status: ${table.status}`,
-      [
-        { text: 'Set Free', onPress: () => changeTableStatus(table.id, 'free') },
-        { text: 'Set Occupied', onPress: () => changeTableStatus(table.id, 'occupied') },
-        { text: 'Set Reserved', onPress: () => changeTableStatus(table.id, 'reserved') },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
-  };
-
-  /**
-   * Change table status
-   */
-  const changeTableStatus = async (tableId, newStatus) => {
-    const success = await updateTableStatus(tableId, newStatus);
-    if (success) {
-      // Update local state
-      setTables((prev) =>
-        prev.map((t) =>
-          t.id === tableId ? { ...t, status: newStatus } : t
-        )
-      );
-    } else {
-      Alert.alert('Error', 'Failed to update table status');
-    }
-  };
-
-  /**
-   * Handle profile press
-   */
-  const handleProfilePress = () => {
+  const handleSettingsPress = () => {
     navigation.navigate('Settings');
   };
 
-  /**
-   * Render table item
-   */
-  const renderTableItem = ({ item }) => (
-    <TableCard table={item} onPress={handleTablePress} />
-  );
-
-  /**
-   * Render empty state
-   */
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>🪑</Text>
-      <Text style={styles.emptyTitle}>No Tables</Text>
-      <Text style={styles.emptyText}>
-        Add tables in your Supabase dashboard
-      </Text>
-    </View>
-  );
-
-  // Loading state
   if (loading) {
     return (
       <View style={styles.container}>
-        <TopBar title="Tables" onProfilePress={handleProfilePress} />
+        <TopBar onProfilePress={handleSettingsPress} />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading tables...</Text>
-        </View>
-      </View>
-    );
-  }
-
-  // Error state
-  if (error && tables.length === 0) {
-    return (
-      <View style={styles.container}>
-        <TopBar title="Tables" onProfilePress={handleProfilePress} />
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorIcon}>⚠️</Text>
-          <Text style={styles.errorText}>{error}</Text>
+          <ActivityIndicator size="large" color="#d4a574" />
         </View>
       </View>
     );
@@ -145,43 +97,72 @@ const TablesScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Top Bar */}
-      <TopBar title="Tables" onProfilePress={handleProfilePress} />
+      <TopBar onProfilePress={handleSettingsPress} />
 
-      {/* Legend */}
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: colors.tableFree }]} />
-          <Text style={styles.legendText}>Free</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: colors.tableOccupied }]} />
-          <Text style={styles.legendText}>Occupied</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: colors.tableReserved }]} />
-          <Text style={styles.legendText}>Reserved</Text>
-        </View>
-      </View>
-
-      {/* Tables Grid */}
-      <FlatList
-        data={tables}
-        renderItem={renderTableItem}
-        keyExtractor={(item) => item.id?.toString()}
-        numColumns={2}
-        contentContainerStyle={styles.listContent}
+      <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
+            tintColor="#d4a574"
+            colors={['#d4a574']}
           />
         }
-        ListEmptyComponent={renderEmptyState}
-      />
+      >
+        <Text style={styles.sectionTitle}>Tables</Text>
+
+        <View style={styles.grid}>
+          {tables.map((table) => {
+            const style = getStatusStyle(table.status);
+            return (
+              <TouchableOpacity
+                key={table.id}
+                style={[
+                  styles.tableCard,
+                  {
+                    backgroundColor: style.bg,
+                    borderColor: style.border,
+                  },
+                ]}
+                activeOpacity={0.7}
+              >
+                {/* Sofa Icon */}
+                <MaterialCommunityIcons
+                  name="sofa-single"
+                  size={32}
+                  color={style.icon}
+                />
+
+                {/* Table Name */}
+                <Text style={[styles.tableName, { color: style.text }]}>
+                  {table.name}
+                </Text>
+
+                {/* Status Badge */}
+                <View style={[styles.statusBadge, { backgroundColor: style.badgeBg }]}>
+                  <Text style={[styles.statusText, { color: style.text }]}>
+                    {table.status}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {tables.length === 0 && (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>🪑</Text>
+            <Text style={styles.emptyTitle}>No Tables</Text>
+            <Text style={styles.emptyText}>
+              Add tables in your Supabase dashboard
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.bottomPadding} />
+      </ScrollView>
     </View>
   );
 };
@@ -189,83 +170,75 @@ const TablesScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: '#ffffff',
+  },
+  scrollView: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    marginTop: spacing.lg,
-    fontSize: typography.sizes.md,
-    color: colors.textSecondary,
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 16,
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xxl,
-  },
-  errorIcon: {
-    fontSize: 48,
-    marginBottom: spacing.lg,
-  },
-  errorText: {
-    fontSize: typography.sizes.md,
-    color: colors.error,
-    textAlign: 'center',
-  },
-  legend: {
+  grid: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    flexWrap: 'wrap',
+    paddingHorizontal: 14,
   },
-  legendItem: {
-    flexDirection: 'row',
+  tableCard: {
+    width: '46%',
+    marginHorizontal: '2%',
+    marginBottom: 16,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    paddingVertical: 24,
     alignItems: 'center',
-    marginHorizontal: spacing.lg,
+    justifyContent: 'center',
   },
-  legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: spacing.sm,
+  tableName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginTop: 12,
+    marginBottom: 8,
   },
-  legendText: {
-    fontSize: typography.sizes.sm,
-    color: colors.textSecondary,
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  listContent: {
-    padding: spacing.sm,
-    paddingBottom: spacing.xxl,
+  statusText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: spacing.huge,
+    paddingTop: 60,
   },
   emptyIcon: {
     fontSize: 64,
-    marginBottom: spacing.lg,
+    marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 8,
   },
   emptyText: {
-    fontSize: typography.sizes.md,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    paddingHorizontal: spacing.xxl,
+    fontSize: 15,
+    color: '#6b7280',
+  },
+  bottomPadding: {
+    height: 100,
   },
 });
 
 export default TablesScreen;
-

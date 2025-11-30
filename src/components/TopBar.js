@@ -1,6 +1,6 @@
 /**
  * TopBar Component
- * Displays app name on the left and profile icon on the right
+ * Displays hamburger menu, app name, and settings icon
  * Used across all screens for consistent header
  */
 import React from 'react';
@@ -12,32 +12,44 @@ import {
   StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 
-const TopBar = ({ title = 'NewPOS', onProfilePress, showProfile = true }) => {
+const TopBar = ({ title = 'KarmaTab POS', onProfilePress }) => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+
+  const handleSettingsPress = () => {
+    if (onProfilePress) {
+      onProfilePress();
+    } else {
+      navigation.navigate('Settings');
+    }
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      
+      {/* Hamburger Menu */}
+      <TouchableOpacity style={styles.iconButton}>
+        <MaterialCommunityIcons name="menu" size={24} color="#374151" />
+      </TouchableOpacity>
       
       {/* App Title */}
       <Text style={styles.title}>{title}</Text>
       
-      {/* Profile Icon */}
-      {showProfile && (
-        <TouchableOpacity
-          style={styles.profileButton}
-          onPress={onProfilePress}
-          activeOpacity={0.7}
-        >
-          <View style={styles.profileIcon}>
-            <Text style={styles.profileText}>👤</Text>
-          </View>
-        </TouchableOpacity>
-      )}
+      {/* Settings Icon */}
+      <TouchableOpacity
+        style={styles.settingsButton}
+        onPress={handleSettingsPress}
+        activeOpacity={0.7}
+      >
+        <MaterialCommunityIcons name="cog-outline" size={22} color="#d4a574" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -49,32 +61,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
-    backgroundColor: colors.background,
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: '#f3f4f6',
   },
-  title: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: colors.textPrimary,
-  },
-  profileButton: {
+  iconButton: {
     padding: spacing.xs,
   },
-  profileIcon: {
+  title: {
+    fontSize: typography.sizes.lg,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  settingsButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surface,
+    backgroundColor: '#fef3c7',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  profileText: {
-    fontSize: 20,
   },
 });
 
 export default TopBar;
-

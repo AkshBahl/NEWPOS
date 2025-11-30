@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Alert } from "react-native";
+import { View, Text, TouchableOpacity, Alert, StatusBar } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { validatePasscode } from "../lib/supabaseClient";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Passcode">;
-
-const digits = ["1","2","3","4","5","6","7","8","9","0"];
 
 export default function PasscodeScreen({ navigation }: Props) {
   const [code, setCode] = useState("");
@@ -27,70 +26,147 @@ export default function PasscodeScreen({ navigation }: Props) {
     if (ok) {
       navigation.replace("MainTabs");
     } else {
-      Alert.alert("Incorrect passcode");
+      Alert.alert("Incorrect passcode", "Please try again.");
       setCode("");
     }
   };
 
-  const indicators = [0,1,2,3];
+  const renderDot = (index: number) => (
+    <View
+      key={index}
+      style={{
+        width: 14,
+        height: 14,
+        borderRadius: 7,
+        backgroundColor: index < code.length ? "#6b7280" : "#d1d5db",
+        marginHorizontal: 8,
+      }}
+    />
+  );
+
+  const renderButton = (digit: string) => (
+    <TouchableOpacity
+      key={digit}
+      onPress={() => handleDigit(digit)}
+      style={{
+        width: "30%",
+        backgroundColor: "#ffffff",
+        borderRadius: 16,
+        paddingVertical: 18,
+        marginVertical: 6,
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: "#e5e7eb",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
+      }}
+      activeOpacity={0.7}
+    >
+      <Text style={{ fontSize: 22, fontWeight: "500", color: "#374151" }}>
+        {digit}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
-    <View className="flex-1 bg-white items-center justify-center">
-      <View className="w-[80%] bg-[#f8fafc] rounded-2xl py-8 px-6 shadow-md">
-        <Text className="text-center text-gray-900 font-semibold text-lg mb-1">
+    <View style={{ flex: 1, backgroundColor: "#ffffff", alignItems: "center", justifyContent: "center" }}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      
+      {/* Card Container */}
+      <View
+        style={{
+          width: "85%",
+          backgroundColor: "#f8fafc",
+          borderRadius: 24,
+          paddingVertical: 36,
+          paddingHorizontal: 24,
+          alignItems: "center",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          elevation: 4,
+        }}
+      >
+        {/* Title */}
+        <Text style={{ fontSize: 24, fontWeight: "700", color: "#1f2937", marginBottom: 8 }}>
           KarmaTab POS
         </Text>
-        <Text className="text-center text-xs text-gray-500 mb-4">
+        
+        {/* Subtitle */}
+        <Text style={{ fontSize: 14, color: "#6b7280", marginBottom: 28 }}>
           Enter your passcode to continue
         </Text>
 
         {/* Dots */}
-        <View className="flex-row justify-center space-x-2 mb-6">
-          {indicators.map((i) => (
-            <View
-              key={i}
-              className={`w-2 h-2 rounded-full ${
-                i < code.length ? "bg-gray-700" : "bg-gray-300"
-              }`}
-            />
-          ))}
+        <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 32 }}>
+          {[0, 1, 2, 3].map(renderDot)}
         </View>
 
-        {/* Keypad */}
-        <View className="flex-row flex-wrap justify-between">
-          {digits.slice(0,9).map((d) => (
-            <TouchableOpacity
-              key={d}
-              onPress={() => handleDigit(d)}
-              className="w-[30%] bg-white rounded-xl py-3 my-1 items-center justify-center border border-gray-200 shadow-sm"
-            >
-              <Text className="text-gray-800 font-medium">{d}</Text>
-            </TouchableOpacity>
-          ))}
+        {/* Number Pad */}
+        <View style={{ width: "100%" }}>
+          {/* Row 1 */}
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            {renderButton("1")}
+            {renderButton("2")}
+            {renderButton("3")}
+          </View>
 
-          {/* 0 row */}
-          <View className="flex-row w-full justify-between mt-1">
-            <TouchableOpacity
-              className="w-[30%] rounded-xl py-3 my-1"
-              disabled
-            />
-            <TouchableOpacity
-              onPress={() => handleDigit("0")}
-              className="w-[30%] bg-white rounded-xl py-3 my-1 items-center justify-center border border-gray-200 shadow-sm"
-            >
-              <Text className="text-gray-800 font-medium">0</Text>
-            </TouchableOpacity>
+          {/* Row 2 */}
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            {renderButton("4")}
+            {renderButton("5")}
+            {renderButton("6")}
+          </View>
+
+          {/* Row 3 */}
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            {renderButton("7")}
+            {renderButton("8")}
+            {renderButton("9")}
+          </View>
+
+          {/* Row 4 - Empty, 0, Backspace */}
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            {/* Empty space */}
+            <View style={{ width: "30%" }} />
+            
+            {/* 0 */}
+            {renderButton("0")}
+            
+            {/* Backspace */}
             <TouchableOpacity
               onPress={handleBackspace}
-              className="w-[30%] bg-white rounded-xl py-3 my-1 items-center justify-center border border-gray-200 shadow-sm"
+              style={{
+                width: "30%",
+                backgroundColor: "#ffffff",
+                borderRadius: 16,
+                paddingVertical: 18,
+                marginVertical: 6,
+                alignItems: "center",
+                justifyContent: "center",
+                borderWidth: 1,
+                borderColor: "#e5e7eb",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+                elevation: 1,
+              }}
+              activeOpacity={0.7}
             >
-              <Text className="text-gray-600 text-xs">⌫</Text>
+              <MaterialCommunityIcons name="backspace-outline" size={22} color="#6b7280" />
             </TouchableOpacity>
           </View>
         </View>
 
-        <TouchableOpacity className="mt-4">
-          <Text className="text-center text-[11px] text-amber-500">
+        {/* Forgot Passcode */}
+        <TouchableOpacity style={{ marginTop: 20 }}>
+          <Text style={{ fontSize: 13, color: "#d4a574", fontWeight: "500" }}>
             Forgot Passcode?
           </Text>
         </TouchableOpacity>
@@ -98,4 +174,3 @@ export default function PasscodeScreen({ navigation }: Props) {
     </View>
   );
 }
-

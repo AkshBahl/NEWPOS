@@ -1,170 +1,116 @@
 /**
  * OrdersScreen Component
- * Displays orders with filter buttons (All, Paid, Pending)
+ * Displays orders with filter tabs and order cards
+ * Matches Figma design
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
   Text,
+  StyleSheet,
+  ScrollView,
   TouchableOpacity,
-  Alert,
+  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
-import { spacing } from '../theme/spacing';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { fetchOrders } from '../services/supabase';
 import TopBar from '../components/TopBar';
-import OrderItem from '../components/OrderItem';
 
-// Filter options
-const FILTERS = [
-  { key: 'all', label: 'All', value: null },
-  { key: 'paid', label: 'Paid', value: 'paid' },
-  { key: 'pending', label: 'Pending', value: 'pending' },
-];
+const filters = ['All', 'Paid', 'Pending'];
 
 const OrdersScreen = ({ navigation }) => {
-  // State
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [error, setError] = useState(null);
+  const [activeFilter, setActiveFilter] = useState('All');
 
-  // Fetch orders on mount and when filter changes
   useEffect(() => {
     loadOrders();
   }, [activeFilter]);
 
-  /**
-   * Load orders from Supabase
-   */
   const loadOrders = async () => {
     try {
-      setError(null);
-      const filter = FILTERS.find((f) => f.key === activeFilter);
-      const data = await fetchOrders(filter?.value);
+      const status = activeFilter === 'All' ? null : activeFilter.toLowerCase();
+      const data = await fetchOrders(status);
       setOrders(data);
     } catch (err) {
-      setError('Failed to load orders');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Handle pull-to-refresh
-   */
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadOrders();
     setRefreshing(false);
   }, [activeFilter]);
 
-  /**
-   * Handle order press
-   */
-  const handleOrderPress = (order) => {
-    Alert.alert(
-      `Order #${order.id}`,
-      `Table: ${order.table_number}\nTotal: $${order.total?.toFixed(2)}\nStatus: ${order.status}`,
-      [{ text: 'OK' }]
-    );
-  };
-
-  /**
-   * Handle profile press
-   */
-  const handleProfilePress = () => {
+  const handleSettingsPress = () => {
     navigation.navigate('Settings');
   };
 
-  /**
-   * Handle filter change
-   */
-  const handleFilterChange = (filterKey) => {
-    setActiveFilter(filterKey);
-    setLoading(true);
+  const formatTime = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
   };
 
-  /**
-   * Render filter buttons
-   */
-  const renderFilters = () => (
-    <View style={styles.filterContainer}>
-      {FILTERS.map((filter) => (
-        <TouchableOpacity
-          key={filter.key}
-          style={[
-            styles.filterButton,
-            activeFilter === filter.key && styles.filterButtonActive,
-          ]}
-          onPress={() => handleFilterChange(filter.key)}
-          activeOpacity={0.7}
-        >
-          <Text
-            style={[
-              styles.filterText,
-              activeFilter === filter.key && styles.filterTextActive,
-            ]}
-          >
-            {filter.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
+  const renderOrderCard = (order) => {
+    const isPaid = order.status?.toLowerCase() === 'paid';
 
-  /**
-   * Render order item
-   */
-  const renderOrderItem = ({ item }) => (
-    <OrderItem order={item} onPress={handleOrderPress} />
-  );
-
-  /**
-   * Render empty state
-   */
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>📋</Text>
-      <Text style={styles.emptyTitle}>No Orders</Text>
-      <Text style={styles.emptyText}>
-        {activeFilter === 'all'
-          ? 'Orders will appear here'
-          : `No ${activeFilter} orders found`}
-      </Text>
-    </View>
-  );
-
-  // Loading state
-  if (loading && orders.length === 0) {
     return (
-      <View style={styles.container}>
-        <TopBar title="Orders" onProfilePress={handleProfilePress} />
-        {renderFilters()}
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading orders...</Text>
+      <View key={order.id} style={styles.orderCard}>
+        {/* Left Section - Status Icon + Order Info */}
+        <View style={styles.leftSection}>
+          {/* Status Circle */}
+          <View style={[styles.statusCircle, isPaid ? styles.paidCircle : styles.pendingCircle]}>
+            {isPaid ? (
+              <MaterialCommunityIcons name="check" size={18} color="#22c55e" />
+            ) : (
+              <View style={styles.pendingDot} />
+            )}
+          </View>
+
+          {/* Order Info */}
+          <View style={styles.orderInfo}>
+            <View style={styles.orderHeader}>
+              <Text style={styles.orderNumber}>#{order.order_number || order.id}</Text>
+              <View style={[styles.statusBadge, isPaid ? styles.paidBadge : styles.pendingBadge]}>
+                <Text style={[styles.statusBadgeText, isPaid ? styles.paidText : styles.pendingText]}>
+                  {isPaid ? 'Paid' : 'Pending'}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.tableText}>
+              {order.table_name || `Table ${order.table_id}`}
+            </Text>
+          </View>
+        </View>
+
+        {/* Bottom Row - Time and Amount */}
+        <View style={styles.bottomRow}>
+          <View style={styles.timeContainer}>
+            <MaterialCommunityIcons name="clock-outline" size={16} color="#9ca3af" />
+            <Text style={styles.timeText}>{formatTime(order.created_at)}</Text>
+          </View>
+          <Text style={styles.amountText}>${order.total?.toFixed(2)}</Text>
         </View>
       </View>
     );
-  }
+  };
 
-  // Error state
-  if (error && orders.length === 0) {
+  if (loading) {
     return (
       <View style={styles.container}>
-        <TopBar title="Orders" onProfilePress={handleProfilePress} />
-        {renderFilters()}
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorIcon}>⚠️</Text>
-          <Text style={styles.errorText}>{error}</Text>
+        <TopBar onProfilePress={handleSettingsPress} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#d4a574" />
         </View>
       </View>
     );
@@ -172,29 +118,58 @@ const OrdersScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Top Bar */}
-      <TopBar title="Orders" onProfilePress={handleProfilePress} />
+      <TopBar onProfilePress={handleSettingsPress} />
 
-      {/* Filter Buttons */}
-      {renderFilters()}
+      {/* Filter Tabs */}
+      <View style={styles.filterContainer}>
+        {filters.map((filter) => {
+          const isActive = activeFilter === filter;
+          return (
+            <TouchableOpacity
+              key={filter}
+              style={[styles.filterTab, isActive && styles.filterTabActive]}
+              onPress={() => setActiveFilter(filter)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.filterText, isActive && styles.filterTextActive]}>
+                {filter}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
       {/* Orders List */}
-      <FlatList
-        data={orders}
-        renderItem={renderOrderItem}
-        keyExtractor={(item) => item.id?.toString()}
-        contentContainerStyle={styles.listContent}
+      <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
+            tintColor="#d4a574"
+            colors={['#d4a574']}
           />
         }
-        ListEmptyComponent={renderEmptyState}
-      />
+      >
+        <View style={styles.ordersContainer}>
+          {orders.map(renderOrderCard)}
+
+          {orders.length === 0 && (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>📋</Text>
+              <Text style={styles.emptyTitle}>No Orders</Text>
+              <Text style={styles.emptyText}>
+                {activeFilter === 'All'
+                  ? 'No orders found'
+                  : `No ${activeFilter.toLowerCase()} orders`}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.bottomPadding} />
+      </ScrollView>
     </View>
   );
 };
@@ -202,90 +177,163 @@ const OrdersScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: '#ffffff',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    marginTop: spacing.lg,
-    fontSize: typography.sizes.md,
-    color: colors.textSecondary,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xxl,
-  },
-  errorIcon: {
-    fontSize: 48,
-    marginBottom: spacing.lg,
-  },
-  errorText: {
-    fontSize: typography.sizes.md,
-    color: colors.error,
-    textAlign: 'center',
-  },
   filterContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    gap: 10,
   },
-  filterButton: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm,
-    marginHorizontal: spacing.xs,
-    borderRadius: spacing.borderRadius.round,
-    backgroundColor: colors.surface,
+  filterTab: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#ffffff',
   },
-  filterButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+  filterTabActive: {
+    backgroundColor: '#1f2937',
+    borderColor: '#1f2937',
   },
   filterText: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
-    color: colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6b7280',
   },
   filterTextActive: {
-    color: colors.white,
+    color: '#ffffff',
   },
-  listContent: {
-    paddingVertical: spacing.md,
-    paddingBottom: spacing.xxl,
+  scrollView: {
+    flex: 1,
+  },
+  ordersContainer: {
+    paddingHorizontal: 20,
+  },
+  orderCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  statusCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  paidCircle: {
+    backgroundColor: '#dcfce7',
+  },
+  pendingCircle: {
+    backgroundColor: '#fef3c7',
+  },
+  pendingDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#f59e0b',
+  },
+  orderInfo: {
+    flex: 1,
+  },
+  orderHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  orderNumber: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  paidBadge: {
+    backgroundColor: '#dcfce7',
+  },
+  pendingBadge: {
+    backgroundColor: '#fef3c7',
+  },
+  statusBadgeText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  paidText: {
+    color: '#15803d',
+  },
+  pendingText: {
+    color: '#d97706',
+  },
+  tableText: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingLeft: 44,
+  },
+  timeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  timeText: {
+    fontSize: 14,
+    color: '#9ca3af',
+    marginLeft: 6,
+  },
+  amountText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: spacing.huge,
+    paddingTop: 60,
   },
   emptyIcon: {
     fontSize: 64,
-    marginBottom: spacing.lg,
+    marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 8,
   },
   emptyText: {
-    fontSize: typography.sizes.md,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    paddingHorizontal: spacing.xxl,
+    fontSize: 15,
+    color: '#6b7280',
+  },
+  bottomPadding: {
+    height: 100,
   },
 });
 
 export default OrdersScreen;
-

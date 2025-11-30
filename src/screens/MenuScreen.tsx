@@ -1,64 +1,83 @@
-import React from "react";
-import { View, Text, ScrollView, TextInput, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, ScrollView, TextInput, Image, ActivityIndicator } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
 import HeaderBar from "../components/HeaderBar";
-
-const items = [
-  { id: 1, name: "Grilled Salmon", price: "$24.99", image: "https://images.pexels.com/photos/3296273/pexels-photo-3296273.jpeg" },
-  { id: 2, name: "Classic Burger", price: "$15.99", image: "https://images.pexels.com/photos/1639560/pexels-photo-1639560.jpeg" },
-  { id: 3, name: "Margherita Pizza", price: "$18.99", image: "https://images.pexels.com/photos/724216/pexels-photo-724216.jpeg" },
-  { id: 4, name: "Creamy Pasta", price: "$16.99", image: "https://images.pexels.com/photos/1437267/pexels-photo-1437267.jpeg" },
-  { id: 5, name: "Fresh Garden Salad", price: "$12.99", image: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg" },
-  { id: 6, name: "Chocolate Cake", price: "$8.99", image: "https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg" },
-];
+import { fetchMenuItems } from "../services/supabase";
 
 export default function MenuScreen() {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    loadMenuItems();
+  }, []);
+
+  const loadMenuItems = async () => {
+    setLoading(true);
+    const data = await fetchMenuItems();
+    setItems(data);
+    setLoading(false);
+  };
+
+  const filteredItems = items.filter((item) =>
+    item.name?.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <View className="flex-1 bg-white">
       <HeaderBar />
 
-      {/* simple "hero" image strip placeholder */}
-      <View className="mt-3 items-center">
-        <View className="w-[80%] h-16 rounded-2xl overflow-hidden bg-gray-200" />
-      </View>
-
-      {/* search */}
-      <View className="mt-3 px-6">
-        <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-2">
-          <Feather name="search" size={16} color="#9ca3af" />
+      {/* Search */}
+      <View className="mt-4 px-5">
+        <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-3">
+          <Feather name="search" size={18} color="#9ca3af" />
           <TextInput
             placeholder="Search menu..."
             placeholderTextColor="#9ca3af"
-            className="ml-2 flex-1 text-sm text-gray-700"
+            value={search}
+            onChangeText={setSearch}
+            className="ml-3 flex-1 text-sm text-gray-700"
           />
         </View>
       </View>
 
-      {/* grid */}
-      <ScrollView className="mt-3 px-6 mb-20">
-        <View className="flex-row flex-wrap justify-between">
-          {items.map((item) => (
-            <View
-              key={item.id}
-              className="w-[48%] bg-white rounded-2xl mb-3 border border-gray-200 shadow-sm"
-            >
-              <Image
-                source={{ uri: item.image }}
-                className="w-full h-32 rounded-t-2xl"
-              />
-              <View className="px-3 py-2">
-                <Text className="text-xs text-gray-700" numberOfLines={1}>
-                  {item.name}
-                </Text>
-                <Text className="text-[11px] text-gray-400 mt-1">
-                  {item.price}
-                </Text>
-              </View>
-            </View>
-          ))}
+      {loading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#d4a574" />
         </View>
-      </ScrollView>
+      ) : (
+        <ScrollView className="mt-4 px-5" showsVerticalScrollIndicator={false}>
+          <View className="flex-row flex-wrap justify-between pb-24">
+            {filteredItems.map((item) => (
+              <View
+                key={item.id}
+                className="w-[48%] bg-white rounded-2xl mb-4 border border-gray-100 shadow-sm overflow-hidden"
+              >
+                {item.image_url ? (
+                  <Image
+                    source={{ uri: item.image_url }}
+                    className="w-full h-28"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View className="w-full h-28 bg-gray-200 items-center justify-center">
+                    <Feather name="image" size={32} color="#d1d5db" />
+                  </View>
+                )}
+                <View className="px-3 py-3">
+                  <Text className="text-sm font-medium text-gray-800" numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text className="text-sm text-amber-600 mt-1">
+                    ${item.price?.toFixed(2)}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      )}
     </View>
   );
 }
-

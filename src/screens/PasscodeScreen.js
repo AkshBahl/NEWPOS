@@ -1,38 +1,26 @@
 /**
  * PasscodeScreen Component
  * Displays 4-digit passcode entry with number pad
- * Validates against Supabase settings table
- * Falls back to "1234" if Supabase fails
+ * Matches Figma design exactly
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Animated,
-  ActivityIndicator,
+  StatusBar,
+  Alert,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
-import { spacing } from '../theme/spacing';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { fetchPasscode } from '../services/supabase';
 
 // Fallback passcode if Supabase fails
 const FALLBACK_PASSCODE = '1234';
 
 const PasscodeScreen = ({ navigation }) => {
-  const insets = useSafeAreaInsets();
-  
-  // State
   const [passcode, setPasscode] = useState('');
   const [storedPasscode, setStoredPasscode] = useState(FALLBACK_PASSCODE);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  
-  // Animation ref for shake effect
-  const shakeAnimation = useRef(new Animated.Value(0)).current;
 
   // Fetch passcode from Supabase on mount
   useEffect(() => {
@@ -46,173 +34,116 @@ const PasscodeScreen = ({ navigation }) => {
     }
   }, [passcode]);
 
-  /**
-   * Load passcode from Supabase
-   */
   const loadPasscode = async () => {
     try {
-      setLoading(true);
       const code = await fetchPasscode();
       if (code) {
         setStoredPasscode(code);
       }
     } catch (err) {
       console.log('Using fallback passcode');
-    } finally {
-      setLoading(false);
     }
   };
 
-  /**
-   * Validate entered passcode
-   */
   const validatePasscode = () => {
     if (passcode === storedPasscode) {
-      // Correct - navigate to home
-      navigation.replace('Home');
+      navigation.replace('MainTabs');
     } else {
-      // Incorrect - shake and show error
-      setError('Incorrect passcode. Please try again.');
-      triggerShake();
-      // Clear passcode after animation
-      setTimeout(() => {
-        setPasscode('');
-        setError('');
-      }, 1000);
+      Alert.alert('Incorrect passcode', 'Please try again.');
+      setPasscode('');
     }
   };
 
-  /**
-   * Trigger shake animation
-   */
-  const triggerShake = () => {
-    Animated.sequence([
-      Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: 0, duration: 50, useNativeDriver: true }),
-    ]).start();
-  };
-
-  /**
-   * Handle number pad press
-   */
   const handleNumberPress = (num) => {
     if (passcode.length < 4) {
       setPasscode((prev) => prev + num);
     }
   };
 
-  /**
-   * Handle delete/backspace
-   */
-  const handleDelete = () => {
+  const handleBackspace = () => {
     setPasscode((prev) => prev.slice(0, -1));
   };
 
-  /**
-   * Render passcode dots
-   */
-  const renderPasscodeDots = () => {
-    const dots = [];
-    for (let i = 0; i < 4; i++) {
-      dots.push(
-        <View
-          key={i}
-          style={[
-            styles.dot,
-            passcode.length > i && styles.dotFilled,
-            error && styles.dotError,
-          ]}
-        />
-      );
-    }
-    return dots;
-  };
+  const renderDot = (index) => (
+    <View
+      key={index}
+      style={[
+        styles.dot,
+        passcode.length > index && styles.dotFilled,
+      ]}
+    />
+  );
 
-  /**
-   * Render number pad button
-   */
-  const renderNumberButton = (num) => (
+  const renderButton = (digit) => (
     <TouchableOpacity
-      key={num}
+      key={digit}
       style={styles.numberButton}
-      onPress={() => handleNumberPress(num.toString())}
+      onPress={() => handleNumberPress(digit)}
       activeOpacity={0.7}
     >
-      <Text style={styles.numberText}>{num}</Text>
+      <Text style={styles.numberText}>{digit}</Text>
     </TouchableOpacity>
   );
 
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
-    );
-  }
-
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.xxl }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>NewPOS</Text>
-        <Text style={styles.subtitle}>Enter your passcode</Text>
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      
+      {/* Card Container */}
+      <View style={styles.card}>
+        {/* Title */}
+        <Text style={styles.title}>KarmaTab POS</Text>
+        
+        {/* Subtitle */}
+        <Text style={styles.subtitle}>Enter your passcode to continue</Text>
+
+        {/* Dots */}
+        <View style={styles.dotsContainer}>
+          {[0, 1, 2, 3].map(renderDot)}
+        </View>
+
+        {/* Number Pad */}
+        <View style={styles.numberPad}>
+          {/* Row 1 */}
+          <View style={styles.row}>
+            {renderButton('1')}
+            {renderButton('2')}
+            {renderButton('3')}
+          </View>
+
+          {/* Row 2 */}
+          <View style={styles.row}>
+            {renderButton('4')}
+            {renderButton('5')}
+            {renderButton('6')}
+          </View>
+
+          {/* Row 3 */}
+          <View style={styles.row}>
+            {renderButton('7')}
+            {renderButton('8')}
+            {renderButton('9')}
+          </View>
+
+          {/* Row 4 */}
+          <View style={styles.row}>
+            <View style={styles.emptyButton} />
+            {renderButton('0')}
+            <TouchableOpacity
+              style={styles.numberButton}
+              onPress={handleBackspace}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons name="backspace-outline" size={22} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Forgot Passcode */}
+        <TouchableOpacity style={styles.forgotButton}>
+          <Text style={styles.forgotText}>Forgot Passcode?</Text>
+        </TouchableOpacity>
       </View>
-
-      {/* Passcode Dots */}
-      <Animated.View
-        style={[
-          styles.dotsContainer,
-          { transform: [{ translateX: shakeAnimation }] },
-        ]}
-      >
-        {renderPasscodeDots()}
-      </Animated.View>
-
-      {/* Error Message */}
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-      {/* Number Pad */}
-      <View style={styles.numberPad}>
-        {/* Row 1 */}
-        <View style={styles.numberRow}>
-          {[1, 2, 3].map(renderNumberButton)}
-        </View>
-
-        {/* Row 2 */}
-        <View style={styles.numberRow}>
-          {[4, 5, 6].map(renderNumberButton)}
-        </View>
-
-        {/* Row 3 */}
-        <View style={styles.numberRow}>
-          {[7, 8, 9].map(renderNumberButton)}
-        </View>
-
-        {/* Row 4 */}
-        <View style={styles.numberRow}>
-          {/* Empty space */}
-          <View style={styles.numberButton} />
-          
-          {/* Zero */}
-          {renderNumberButton(0)}
-          
-          {/* Delete */}
-          <TouchableOpacity
-            style={styles.numberButton}
-            onPress={handleDelete}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.deleteText}>⌫</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Footer hint */}
-      <Text style={styles.hintText}>Default passcode: 1234</Text>
     </View>
   );
 };
@@ -220,87 +151,88 @@ const PasscodeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#ffffff',
     alignItems: 'center',
-  },
-  loadingContainer: {
     justifyContent: 'center',
   },
-  loadingText: {
-    marginTop: spacing.lg,
-    fontSize: typography.sizes.md,
-    color: colors.textSecondary,
-  },
-  header: {
+  card: {
+    width: '85%',
+    backgroundColor: '#f8fafc',
+    borderRadius: 24,
+    paddingVertical: 36,
+    paddingHorizontal: 24,
     alignItems: 'center',
-    marginBottom: spacing.xxxl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   title: {
-    fontSize: typography.sizes.xxl,
-    fontWeight: typography.weights.bold,
-    color: colors.primary,
-    marginBottom: spacing.sm,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: typography.sizes.md,
-    color: colors.textSecondary,
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 28,
   },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: 32,
   },
   dot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    marginHorizontal: spacing.md,
-    backgroundColor: 'transparent',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#d1d5db',
+    marginHorizontal: 8,
   },
   dotFilled: {
-    backgroundColor: colors.primary,
-  },
-  dotError: {
-    borderColor: colors.error,
-    backgroundColor: colors.error,
-  },
-  errorText: {
-    fontSize: typography.sizes.sm,
-    color: colors.error,
-    marginBottom: spacing.lg,
+    backgroundColor: '#6b7280',
   },
   numberPad: {
-    marginTop: spacing.xxl,
+    width: '100%',
   },
-  numberRow: {
+  row: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
   },
   numberButton: {
-    width: 80,
-    height: 80,
-    justifyContent: 'center',
+    width: '30%',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    paddingVertical: 18,
+    marginVertical: 6,
     alignItems: 'center',
-    margin: spacing.sm,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  emptyButton: {
+    width: '30%',
   },
   numberText: {
-    fontSize: 32,
-    fontWeight: typography.weights.semiBold,
-    color: colors.textPrimary,
+    fontSize: 22,
+    fontWeight: '500',
+    color: '#374151',
   },
-  deleteText: {
-    fontSize: 24,
-    color: colors.textSecondary,
+  forgotButton: {
+    marginTop: 20,
   },
-  hintText: {
-    position: 'absolute',
-    bottom: 40,
-    fontSize: typography.sizes.xs,
-    color: colors.textSecondary,
+  forgotText: {
+    fontSize: 13,
+    color: '#d4a574',
+    fontWeight: '500',
   },
 });
 
 export default PasscodeScreen;
-

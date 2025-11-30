@@ -1,7 +1,7 @@
 /**
  * MenuScreen Component
  * Displays menu items in a 2-column grid layout
- * Includes search functionality
+ * Matches Figma design
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -13,29 +13,22 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
-import { spacing } from '../theme/spacing';
 import { fetchMenuItems } from '../services/supabase';
 import TopBar from '../components/TopBar';
 import SearchBar from '../components/SearchBar';
 import MenuCard from '../components/MenuCard';
 
 const MenuScreen = ({ navigation }) => {
-  // State
   const [menuItems, setMenuItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [error, setError] = useState(null);
 
-  // Fetch menu items on mount
   useEffect(() => {
     loadMenuItems();
   }, []);
 
-  // Filter items when search query changes
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredItems(menuItems);
@@ -49,100 +42,56 @@ const MenuScreen = ({ navigation }) => {
     }
   }, [searchQuery, menuItems]);
 
-  /**
-   * Load menu items from Supabase
-   */
   const loadMenuItems = async () => {
     try {
-      setError(null);
       const data = await fetchMenuItems();
       setMenuItems(data);
       setFilteredItems(data);
     } catch (err) {
-      setError('Failed to load menu items');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Handle pull-to-refresh
-   */
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadMenuItems();
     setRefreshing(false);
   }, []);
 
-  /**
-   * Handle add to order
-   */
   const handleAddToOrder = (item) => {
-    Alert.alert(
-      'Added to Order',
-      `${item.name} has been added to your order.`,
-      [{ text: 'OK' }]
-    );
+    Alert.alert('Added to Order', `${item.name} has been added.`);
   };
 
-  /**
-   * Handle profile press
-   */
-  const handleProfilePress = () => {
+  const handleSettingsPress = () => {
     navigation.navigate('Settings');
   };
 
-  /**
-   * Clear search
-   */
   const handleClearSearch = () => {
     setSearchQuery('');
   };
 
-  /**
-   * Render menu item
-   */
   const renderMenuItem = ({ item }) => (
     <MenuCard item={item} onAddToOrder={handleAddToOrder} />
   );
 
-  /**
-   * Render empty state
-   */
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>🍽️</Text>
       <Text style={styles.emptyTitle}>No Menu Items</Text>
       <Text style={styles.emptyText}>
-        {searchQuery
-          ? 'No items match your search'
-          : 'Add menu items in your Supabase dashboard'}
+        {searchQuery ? 'No items match your search' : 'Add menu items in your Supabase dashboard'}
       </Text>
     </View>
   );
 
-  // Loading state
   if (loading) {
     return (
       <View style={styles.container}>
-        <TopBar title="Menu" onProfilePress={handleProfilePress} />
+        <TopBar onProfilePress={handleSettingsPress} />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading menu...</Text>
-        </View>
-      </View>
-    );
-  }
-
-  // Error state
-  if (error && menuItems.length === 0) {
-    return (
-      <View style={styles.container}>
-        <TopBar title="Menu" onProfilePress={handleProfilePress} />
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorIcon}>⚠️</Text>
-          <Text style={styles.errorText}>{error}</Text>
+          <ActivityIndicator size="large" color="#d4a574" />
         </View>
       </View>
     );
@@ -150,18 +99,15 @@ const MenuScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Top Bar */}
-      <TopBar title="Menu" onProfilePress={handleProfilePress} />
-
-      {/* Search Bar */}
+      <TopBar onProfilePress={handleSettingsPress} />
+      
       <SearchBar
         value={searchQuery}
         onChangeText={setSearchQuery}
-        placeholder="Search menu items..."
+        placeholder="Search menu..."
         onClear={handleClearSearch}
       />
 
-      {/* Menu Grid */}
       <FlatList
         data={filteredItems}
         renderItem={renderMenuItem}
@@ -173,8 +119,8 @@ const MenuScreen = ({ navigation }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
+            tintColor="#d4a574"
+            colors={['#d4a574']}
           />
         }
         ListEmptyComponent={renderEmptyState}
@@ -186,60 +132,39 @@ const MenuScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: '#ffffff',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    marginTop: spacing.lg,
-    fontSize: typography.sizes.md,
-    color: colors.textSecondary,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xxl,
-  },
-  errorIcon: {
-    fontSize: 48,
-    marginBottom: spacing.lg,
-  },
-  errorText: {
-    fontSize: typography.sizes.md,
-    color: colors.error,
-    textAlign: 'center',
-  },
   listContent: {
-    paddingHorizontal: spacing.sm,
-    paddingBottom: spacing.xxl,
+    paddingHorizontal: 14,
+    paddingBottom: 100,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: spacing.huge,
+    paddingTop: 80,
   },
   emptyIcon: {
     fontSize: 64,
-    marginBottom: spacing.lg,
+    marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 8,
   },
   emptyText: {
-    fontSize: typography.sizes.md,
-    color: colors.textSecondary,
+    fontSize: 15,
+    color: '#6b7280',
     textAlign: 'center',
-    paddingHorizontal: spacing.xxl,
+    paddingHorizontal: 40,
   },
 });
 
 export default MenuScreen;
-
